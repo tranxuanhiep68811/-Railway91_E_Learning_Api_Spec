@@ -3,6 +3,9 @@ package com.th.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
+
 @Data
 @Entity
 @Table(name = "courses")
@@ -26,6 +29,9 @@ public class Courses {
     @Column(name = "Instructor", unique = true, nullable = false, columnDefinition = "text")
     private String instructor;
 
+    @OneToMany(mappedBy = "courses", cascade = CascadeType.ALL)
+    private List<Lessons> lessons;
+
     public Courses(Integer id, String coursesName, String description, Integer duration, Integer numberOfLessons, String instructor) {
         this.id = id;
         this.coursesName = coursesName;
@@ -39,4 +45,15 @@ public class Courses {
         // Default constructor
     }
 
+    @Override
+    public String toString() {
+        return "Courses{" +
+                "id=" + id +
+                ", coursesName='" + coursesName + '\'' +
+                ", description='" + description + '\'' +
+                ", duration=" + duration +
+                ", numberOfLessons=" + numberOfLessons +
+                ", instructor='" + instructor + '\'' +
+                '}';
+    }
 }

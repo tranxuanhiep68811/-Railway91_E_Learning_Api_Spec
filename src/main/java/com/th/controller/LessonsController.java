@@ -1,11 +1,9 @@
 package com.th.controller;
 
+import com.th.DTO.LessonsDTO;
 import com.th.entity.Courses;
 import com.th.entity.Lessons;
-import com.th.repository.CoursesRepository;
 import com.th.repository.LessonsRepository;
-import com.th.req.CoursesCreateReq;
-import com.th.req.CoursesUpdateReq;
 import com.th.req.LessonsCreateReq;
 import com.th.req.LessonsUpdateReq;
 import org.springframework.data.domain.Page;
@@ -30,11 +28,11 @@ public class LessonsController {
     @GetMapping
     public ResponseEntity<?> getAllLessons(Pageable pageable) {
         System.out.println(pageable);
-        Page<Lessons> lessons = lessonsRepo.findAll(pageable);
+        Page<LessonsDTO> lessons = lessonsRepo.findAllLessonsDTO(pageable);
         return ResponseEntity.ok(lessons);
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         Optional<Lessons> lessons = lessonsRepo.findById(id);
         if (lessons.isEmpty()) {
@@ -45,10 +43,10 @@ public class LessonsController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody LessonsCreateReq lessonsCreateReq) {
-        String lessonsName= lessonsCreateReq.getLessonsName();
-        Optional<Lessons> opLessons = lessonsRepo.findByLessonsName(lessonsName);
+        String lessonName= lessonsCreateReq.getLessonsName();
+        Optional<Lessons> opLessons = lessonsRepo.findByLessonsName(lessonName);
         if (opLessons.isPresent()) {
-            return new ResponseEntity<>("Lessons Name already exists: " + lessonsName, HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Lessons Name already exists: " + lessonName, HttpStatus.CONFLICT);
         }
         Lessons lessons = new Lessons();
         lessons.setLessonsName(lessonsCreateReq.getLessonsName());;
@@ -62,21 +60,24 @@ public class LessonsController {
         return new ResponseEntity<>("Created successFully!", HttpStatus.CREATED);
     }
 
-    @PutMapping
-    public ResponseEntity<?> update(@RequestBody LessonsUpdateReq lessonsUpdateReq) {
-        String lessonsName = lessonsUpdateReq.getLessonsName();
-        // ***** Kiểm tra ID có tồn tại không
-        Optional<Lessons> existingLessonsOpt = lessonsRepo.findById(lessonsUpdateReq.getId());
-        if (existingLessonsOpt.isEmpty()) {
-            return new ResponseEntity<>("Course ID not found: " + lessonsUpdateReq.getId(),HttpStatus.NOT_FOUND);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Integer id,@RequestBody LessonsUpdateReq lessonsUpdateReq) {
+
+        Optional<Lessons> opLessons = lessonsRepo.findById(id);
+        if (opLessons.isEmpty()) {
+            return new ResponseEntity<>("Không tìm thấy sản phẩm với ID: " + id, HttpStatus.NOT_FOUND);
+        } else
+            if (lessonsUpdateReq.getLessonsName() == null  || lessonsUpdateReq.getDescription().trim().isEmpty()) {
+            return new ResponseEntity<>("Tên bài học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+            if (lessonsUpdateReq.getDuration() <= 0 || lessonsUpdateReq.getDuration() == null) {
+            return new ResponseEntity<>("Số giờ bài học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+            if (lessonsUpdateReq.getDescription() == null || lessonsUpdateReq.getDescription().trim().isEmpty()) {
+            return new ResponseEntity<>("Mô tả bài học không được để trống!", HttpStatus.BAD_REQUEST);
         }
-        // ***** Kiểm tra trùng tên, nhưng loại trừ chính bản ghi đang sửa
-        Optional<Lessons> nameConflict = lessonsRepo.findByLessonsName(lessonsUpdateReq.getLessonsName());
-        if (nameConflict.isPresent() && !nameConflict.get().getId().equals(lessonsUpdateReq.getId())) {
-            return new ResponseEntity<>("Course name already exists: " + lessonsUpdateReq.getLessonsName(),HttpStatus.CONFLICT);
-        }
-        Lessons lessons = existingLessonsOpt.get();
-        lessons.setId(lessonsUpdateReq.getId());
+
+        Lessons lessons = opLessons.get();
         lessons.setLessonsName(lessonsUpdateReq.getLessonsName());;
         lessons.setDescription(lessonsUpdateReq.getDescription());
         lessons.setDuration(lessonsUpdateReq.getDuration());
@@ -99,17 +100,6 @@ public class LessonsController {
         return new ResponseEntity<>("Deleted Successfully!", HttpStatus.OK);
     }
 
-//    @GetMapping("getListLessons")
-//    public ResponseEntity<?> getListLessons() {
-//        List<Lessons> lessons = lessonsRepo.getListLessons();
-//        if (lessons.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of(
-//                    "message", "No lessons found."
-//            ));
-//        }
-//        return new ResponseEntity<>(courses, HttpStatus.OK);
-//    }
-
     @GetMapping("search")
     public ResponseEntity<?> getAll(@RequestParam(required = false) String lessonsName,
                                     @RequestParam(required = false) String description,
@@ -122,25 +112,9 @@ public class LessonsController {
           if (courses.isEmpty()) {
                 return new ResponseEntity<>("No lessons found with the given criteria!" ,HttpStatus.NO_CONTENT);
           }
-
-//        return ResponseEntity.ok("Get data success!");
         System.out.println("***********************");
         return ResponseEntity.ok(courses);
 
     }
 
-
-//    Cách 1:
-//    @GetMapping("getProductById")
-//    public ResponseEntity<?> getProductById(@RequestParam Integer id) {
-//        Product product = productRepo.getProductById(id);
-//        return ResponseEntity.ok(product);
-//    }
-
-//    Cách 2:
-//    @GetMapping("getProductById/{id}")
-//    public ResponseEntity<?> getProductById(@PathVariable Integer id) {
-//        Courses courses = productRepo.getProductById(id);
-//        return ResponseEntity.ok(courses);
-//    }
 }

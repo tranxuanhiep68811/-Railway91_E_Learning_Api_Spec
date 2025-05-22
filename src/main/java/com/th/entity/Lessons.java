@@ -20,6 +20,10 @@ public class Lessons {
     @Column(name = "Duration", nullable = false)
     private Integer duration;
 
+    @ManyToOne
+    @JoinColumn(name = "courses_id")
+    private Courses courses;
+
     public Lessons(Integer id, String lessonsName, String description, Integer duration) {
         this.id = id;
         this.lessonsName = lessonsName;
@@ -27,7 +31,18 @@ public class Lessons {
         this.duration = duration;
     }
 
+
     public Lessons() {
         // Default constructor
+    }
+
+    @Override
+    public String toString() {
+        return "Lessons{" +
+                "id=" + id +
+                ", lessonsName='" + lessonsName + '\'' +
+                ", description='" + description + '\'' +
+                ", duration=" + duration +
+                '}';
     }
 }

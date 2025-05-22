@@ -5,8 +5,6 @@ import lombok.Data;
 @Data
 public class CoursesUpdateReq {
 
-    private Integer id;
-
     private String coursesName;
 
     private String description;

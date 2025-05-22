@@ -1,6 +1,8 @@
 package com.th.controller;
 
+import com.th.DTO.CoursesDTO;
 import com.th.entity.Courses;
+import com.th.entity.Lessons;
 import com.th.repository.CoursesRepository;
 import com.th.req.CoursesCreateReq;
 import com.th.req.CoursesUpdateReq;
@@ -26,7 +28,7 @@ public class CoursesController {
     @GetMapping
     public ResponseEntity<?> getAllCourses(Pageable pageable) {
         System.out.println(pageable);
-        Page<Courses> courses = coursesRepo.findAll(pageable);
+        Page<CoursesDTO> courses = coursesRepo.findAllCoursesDTO(pageable);
         return ResponseEntity.ok(courses);
     }
 
@@ -59,21 +61,28 @@ public class CoursesController {
         return new ResponseEntity<>("Created successFully!", HttpStatus.CREATED);
     }
 
-    @PutMapping
-    public ResponseEntity<?> update(@RequestBody CoursesUpdateReq coursesUpdateReq) {
-        String coursesName = coursesUpdateReq.getCoursesName();
-        // ***** Kiểm tra ID có tồn tại không
-        Optional<Courses> existingCourseOpt = coursesRepo.findById(coursesUpdateReq.getId());
-        if (existingCourseOpt.isEmpty()) {
-            return new ResponseEntity<>("Course ID not found: " + coursesUpdateReq.getId(),HttpStatus.NOT_FOUND);
+    @PutMapping("{id}")
+    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody CoursesUpdateReq coursesUpdateReq) {
+        Optional<Courses> opCourses = coursesRepo.findById(id);
+        if (opCourses.isEmpty()) {
+            return new ResponseEntity<>("Không tìm thấy sản phẩm với ID: " + id, HttpStatus.NOT_FOUND);
+        } else
+        if (coursesUpdateReq.getCoursesName() == null  || coursesUpdateReq.getDescription().trim().isEmpty()) {
+            return new ResponseEntity<>("Tên khóa học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+        if (coursesUpdateReq.getNumberOfLessons() <= 0 || coursesUpdateReq.getNumberOfLessons() == null) {
+            return new ResponseEntity<>("Số khóa học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+        if (coursesUpdateReq.getDescription() == null || coursesUpdateReq.getDescription().trim().isEmpty()) {
+            return new ResponseEntity<>("Mô tả khóa học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+        if (coursesUpdateReq.getDuration() <= 0 || coursesUpdateReq.getDuration() == null) {
+            return new ResponseEntity<>("Số giờ khóa học không được để trống!", HttpStatus.BAD_REQUEST);
+        } else
+        if (coursesUpdateReq.getInstructor() == null || coursesUpdateReq.getInstructor().trim().isEmpty()) {
+            return new ResponseEntity<>("Tên người hướng dẫn không được để trống!", HttpStatus.BAD_REQUEST);
         }
-        // ***** Kiểm tra trùng tên, nhưng loại trừ chính bản ghi đang sửa
-        Optional<Courses> nameConflict = coursesRepo.findByCoursesName(coursesUpdateReq.getCoursesName());
-        if (nameConflict.isPresent() && !nameConflict.get().getId().equals(coursesUpdateReq.getId())) {
-            return new ResponseEntity<>("Course name already exists: " + coursesUpdateReq.getCoursesName(),HttpStatus.CONFLICT);
-        }
-        Courses courses = existingCourseOpt.get();
-        courses.setId(coursesUpdateReq.getId());
+        Courses courses = opCourses.get();
         courses.setCoursesName(coursesUpdateReq.getCoursesName());
         courses.setNumberOfLessons(coursesUpdateReq.getNumberOfLessons());
         courses.setDescription(coursesUpdateReq.getDescription());
@@ -98,17 +107,6 @@ public class CoursesController {
         return new ResponseEntity<>("Deleted Successfully!", HttpStatus.OK);
     }
 
-//    @GetMapping("getListCourses")
-//    public ResponseEntity<?> getListCourses() {
-//        List<Courses> courses = coursesRepo.getListCourses();
-//        if (courses.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of(
-//                    "message", "No courses found."
-//            ));
-//        }
-//        return new ResponseEntity<>(courses, HttpStatus.OK);
-//    }
-
     @GetMapping("search")
     public ResponseEntity<?> getAll(@RequestParam(required = false) String coursesName,
                                     @RequestParam(required = false) String description,
@@ -125,25 +123,9 @@ public class CoursesController {
           if (courses.isEmpty()) {
                 return new ResponseEntity<>("No courses found with the given criteria!" ,HttpStatus.NO_CONTENT);
           }
-
-//        return ResponseEntity.ok("Get data success!");
         System.out.println("***********************");
         return ResponseEntity.ok(courses);
 
     }
 
-
-//    Cách 1:
-//    @GetMapping("getProductById")
-//    public ResponseEntity<?> getProductById(@RequestParam Integer id) {
-//        Product product = productRepo.getProductById(id);
-//        return ResponseEntity.ok(product);
-//    }
-
-//    Cách 2:
-//    @GetMapping("getProductById/{id}")
-//    public ResponseEntity<?> getProductById(@PathVariable Integer id) {
-//        Courses courses = productRepo.getProductById(id);
-//        return ResponseEntity.ok(courses);
-//    }
 }
